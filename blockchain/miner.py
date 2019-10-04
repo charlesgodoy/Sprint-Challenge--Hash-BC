@@ -1,5 +1,7 @@
 import hashlib
 import requests
+import json
+import requests
 
 import sys
 
@@ -8,6 +10,12 @@ from uuid import uuid4
 from timeit import default_timer as timer
 
 import random
+
+def _hash(block):
+    # creates the hash, use json dumps to encode it like in class
+    block_string = json.dumps(block, sort_keys=True).encode()
+    
+    return hashlib.sha256(block_string).hexdigest()
 
 
 def proof_of_work(last_proof):
@@ -23,9 +31,13 @@ def proof_of_work(last_proof):
 
     start = timer()
 
-    print("Searching for next proof")
+    # get the last_hash
+    last_hash = _hash(last_proof)
     proof = 0
-    #  TODO: Your code here
+    print("Searching for next proof")
+    
+    while valid_proof(last_hash, proof) is False:
+        proof += 1
 
     print("Proof found: " + str(proof) + " in " + str(timer() - start))
     return proof
@@ -39,8 +51,8 @@ def valid_proof(last_hash, proof):
     IE:  last_hash: ...AE9123456, new hash 123456888...
     """
 
-    # TODO: Your code here!
-    pass
+    return last_hash[-6:] == _hash(proof)[:6]
+    
 
 
 if __name__ == '__main__':
@@ -71,6 +83,7 @@ if __name__ == '__main__':
         post_data = {"proof": new_proof,
                      "id": id}
 
+        # r = requests.post(url=node + "/mine", json=post_data)
         r = requests.post(url=node + "/mine", json=post_data)
         data = r.json()
         if data.get('message') == 'New Block Forged':
